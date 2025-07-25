@@ -17,7 +17,6 @@
         Easily record videos using your device's camera. Tap below to get started.
       </p>
 
-      <!-- Start Button -->
       <v-btn
         color="red darken-1"
         dark
