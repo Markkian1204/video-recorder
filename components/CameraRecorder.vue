@@ -1,26 +1,10 @@
 <template>
-  <v-container class="camera-container text-center py-6">
-    <!-- Start Camera Button -->
-    <div v-if="!cameraStarted">
-      <v-btn color="primary" @click="startCamera">🎥 Start Camera</v-btn>
-    </div>
+  <div class="camera-container">
+    <!-- Live camera preview -->
+    <video ref="video" autoplay muted playsinline></video>
 
-    <!-- Live Preview -->
-    <video
-      v-if="cameraStarted"
-      ref="video"
-      autoplay
-      muted
-      playsinline
-      class="camera-preview"
-    />
-
-    <!-- Recorder Controls -->
-    <div v-if="cameraStarted" class="record-buttons mt-4">
-      <v-btn color="blue" @click="flipCamera" :disabled="isRecording">
-        🔄 Flip Camera
-      </v-btn>
-
+    <!-- Recording buttons -->
+    <div class="record-buttons">
       <v-btn
         v-if="!isRecording && !isPaused"
         color="red"
@@ -58,25 +42,21 @@
       </v-btn>
     </div>
 
-    <!-- Playback -->
+    <!-- Playback after recording -->
     <video
       v-if="recordedVideoUrl"
       :src="recordedVideoUrl"
       controls
-      class="playback mt-4"
+      class="playback"
     ></video>
 
-    <!-- Download Button -->
-    <div v-if="recordedVideoUrl" class="mt-2">
-      <a
-        :href="recordedVideoUrl"
-        download="recording.webm"
-        class="v-btn primary white--text"
-      >
-        ⬇️ Download Recording
+    <!-- Download -->
+    <div v-if="recordedVideoUrl" class="download">
+      <a :href="recordedVideoUrl" download="recording.webm" class="v-btn primary white--text">
+        ⬇️ Download
       </a>
     </div>
-  </v-container>
+  </div>
 </template>
 
 <script>
@@ -88,41 +68,30 @@ export default {
       recordedChunks: [],
       recordedVideoUrl: null,
       isRecording: false,
-      isPaused: false,
-      usingFrontCamera: true, // ✅ Start with front
-      cameraStarted: false
+      isPaused: false
     }
+  },
+  mounted() {
+    this.startCamera()
   },
   methods: {
     async startCamera() {
-      // Stop previous stream
+      // Stop existing tracks
       if (this.stream) {
-        this.stream.getTracks().forEach((track) => track.stop())
+        this.stream.getTracks().forEach(track => track.stop())
       }
 
       try {
+        // No facingMode constraint — let browser decide (usually back camera)
         this.stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: this.usingFrontCamera ? 'user' : { exact: 'environment' }
-          },
+          video: true,
           audio: true
         })
-
-        this.cameraStarted = true
-
-        this.$nextTick(() => {
-          if (this.$refs.video) {
-            this.$refs.video.srcObject = this.stream
-          }
-        })
+        this.$refs.video.srcObject = this.stream
       } catch (err) {
-        alert('❌ Could not access camera/mic: ' + err.message)
+        alert('❌ Could not access camera/microphone: ' + err.message)
         console.error(err)
       }
-    },
-    flipCamera() {
-      this.usingFrontCamera = !this.usingFrontCamera
-      this.startCamera()
     },
     startRecording() {
       if (!this.stream) return
@@ -146,19 +115,19 @@ export default {
       this.isPaused = false
     },
     pauseRecording() {
-      if (this.mediaRecorder?.state === 'recording') {
+      if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
         this.mediaRecorder.pause()
         this.isPaused = true
       }
     },
     resumeRecording() {
-      if (this.mediaRecorder?.state === 'paused') {
+      if (this.mediaRecorder && this.mediaRecorder.state === 'paused') {
         this.mediaRecorder.resume()
         this.isPaused = false
       }
     },
     stopRecording() {
-      if (this.mediaRecorder?.state !== 'inactive') {
+      if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
         this.mediaRecorder.stop()
         this.isRecording = false
         this.isPaused = false
@@ -167,31 +136,43 @@ export default {
   },
   beforeDestroy() {
     if (this.stream) {
-      this.stream.getTracks().forEach((track) => track.stop())
+      this.stream.getTracks().forEach(track => track.stop())
     }
   }
 }
 </script>
 
 <style scoped>
-.camera-preview {
+.camera-container {
+  position: relative;
   width: 100%;
   max-width: 640px;
+  margin: auto;
+  text-align: center;
+}
+
+video {
+  width: 100%;
   height: auto;
-  border-radius: 10px;
   background: black;
+  border-radius: 8px;
 }
-.playback {
-  width: 100%;
-  max-width: 640px;
-  border-radius: 10px;
-  background: #000;
-}
+
 .record-buttons {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: 12px;
+  margin-top: 20px;
+}
+
+.playback {
+  margin-top: 20px;
+  width: 100%;
+  border-radius: 8px;
+}
+
+.download {
   margin-top: 12px;
 }
 </style>
