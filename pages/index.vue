@@ -1,13 +1,14 @@
-<template>
-  <CameraRecorder />
-</template>
-
 <script>
-import CameraRecorder from '~/components/CameraRecorder.vue'
-
 export default {
-  components: {
-    CameraRecorder
+  middleware: 'auth',
+  mounted() {
+    this.$router.replace('/home') // ✅ Redirect to your home.vue
   }
 }
 </script>
+
+<template>
+  <div>
+    Redirecting to home...
+  </div>
+</template>
