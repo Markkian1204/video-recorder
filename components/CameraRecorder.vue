@@ -89,15 +89,15 @@ export default {
       recordedVideoUrl: null,
       isRecording: false,
       isPaused: false,
-      usingFrontCamera: false, // ⬅️ starts with back camera
+      usingFrontCamera: true, // ✅ Start with front
       cameraStarted: false
     }
   },
   methods: {
     async startCamera() {
-      // Stop existing stream
+      // Stop previous stream
       if (this.stream) {
-        this.stream.getTracks().forEach(track => track.stop())
+        this.stream.getTracks().forEach((track) => track.stop())
       }
 
       try {
@@ -167,7 +167,7 @@ export default {
   },
   beforeDestroy() {
     if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop())
+      this.stream.getTracks().forEach((track) => track.stop())
     }
   }
 }
