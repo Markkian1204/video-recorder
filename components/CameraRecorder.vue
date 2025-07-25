@@ -1,10 +1,10 @@
 <template>
-  <div class="camera-container">
+  <v-container class="camera-container text-center py-6">
     <!-- Live camera preview -->
-    <video ref="video" autoplay muted playsinline></video>
+    <video ref="video" autoplay muted playsinline class="camera-preview" />
 
     <!-- Recording buttons -->
-    <div class="record-buttons">
+    <div class="record-buttons mt-4">
       <v-btn color="blue" @click="flipCamera" :disabled="isRecording">
         🔄 Flip Camera
       </v-btn>
@@ -46,21 +46,21 @@
       </v-btn>
     </div>
 
-    <!-- Playback after recording -->
+    <!-- Playback -->
     <video
       v-if="recordedVideoUrl"
       :src="recordedVideoUrl"
       controls
-      class="playback"
+      class="playback mt-4"
     ></video>
 
     <!-- Download -->
-    <div v-if="recordedVideoUrl" class="download">
+    <div v-if="recordedVideoUrl" class="mt-2">
       <a :href="recordedVideoUrl" download="recording.webm" class="v-btn primary white--text">
-        ⬇️ Download
+        ⬇️ Download Recording
       </a>
     </div>
-  </div>
+  </v-container>
 </template>
 
 <script>
@@ -86,13 +86,32 @@ export default {
       }
 
       try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const videoDevices = devices.filter(d => d.kind === 'videoinput')
+
+        let selectedDeviceId = null
+
+        if (this.usingFrontCamera) {
+          selectedDeviceId = videoDevices.find(d =>
+            d.label.toLowerCase().includes('front')
+          )?.deviceId || videoDevices[0]?.deviceId
+        } else {
+          selectedDeviceId = videoDevices.find(d =>
+            d.label.toLowerCase().includes('back')
+          )?.deviceId || videoDevices[0]?.deviceId
+        }
+
         this.stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: this.usingFrontCamera ? 'user' : 'environment' },
+          video: {
+            deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined
+          },
           audio: true
         })
+
         this.$refs.video.srcObject = this.stream
       } catch (err) {
-        alert('❌ Camera/mic access failed: ' + err.message)
+        alert('❌ Could not access camera or microphone: ' + err.message)
+        console.error(err)
       }
     },
     flipCamera() {
@@ -121,19 +140,19 @@ export default {
       this.isPaused = false
     },
     pauseRecording() {
-      if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+      if (this.mediaRecorder?.state === 'recording') {
         this.mediaRecorder.pause()
         this.isPaused = true
       }
     },
     resumeRecording() {
-      if (this.mediaRecorder && this.mediaRecorder.state === 'paused') {
+      if (this.mediaRecorder?.state === 'paused') {
         this.mediaRecorder.resume()
         this.isPaused = false
       }
     },
     stopRecording() {
-      if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      if (this.mediaRecorder?.state !== 'inactive') {
         this.mediaRecorder.stop()
         this.isRecording = false
         this.isPaused = false
@@ -149,36 +168,18 @@ export default {
 </script>
 
 <style scoped>
-.camera-container {
-  position: relative;
+.camera-preview {
   width: 100%;
   max-width: 640px;
-  margin: auto;
-  text-align: center;
-}
-
-video {
-  width: 100%;
   height: auto;
+  border-radius: 10px;
   background: black;
-  border-radius: 8px;
-}
-
-.record-buttons {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 20px;
 }
 
 .playback {
-  margin-top: 20px;
   width: 100%;
-  border-radius: 8px;
-}
-
-.download {
-  margin-top: 12px;
+  max-width: 640px;
+  border-radius: 10px;
+  background: #000;
 }
 </style>
