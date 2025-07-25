@@ -1,100 +1,117 @@
 <template>
-  <div class="camera-container">
-    <!-- Live camera preview -->
-    <video ref="video" autoplay muted playsinline></video>
+  <v-container class="camera-container text-center py-8">
+    <h2 class="text-h5 mb-6 font-weight-bold">🎥 Camera Recorder</h2>
 
-    <!-- Recording buttons -->
-    <div class="record-buttons">
-      <v-btn color="blue" @click="flipCamera" :disabled="isRecording">
-        🔄 Flip Camera
-      </v-btn>
-
-      <v-btn
-        v-if="!isRecording && !isPaused"
-        color="red"
-        fab
-        @click="startRecording"
-      >
-        <v-icon>mdi-record</v-icon>
-      </v-btn>
-
-      <v-btn
-        v-if="isRecording && !isPaused"
-        color="orange"
-        fab
-        @click="pauseRecording"
-      >
-        <v-icon>mdi-pause</v-icon>
-      </v-btn>
-
-      <v-btn
-        v-if="isPaused"
-        color="green"
-        fab
-        @click="resumeRecording"
-      >
-        <v-icon>mdi-play</v-icon>
-      </v-btn>
-
-      <v-btn
-        v-if="isRecording"
-        color="error"
-        fab
-        @click="stopRecording"
-      >
-        <v-icon>mdi-stop</v-icon>
+    <!-- Start Button -->
+    <div v-if="!cameraStarted">
+      <v-btn color="primary" @click="startCamera">
+        ▶️ Start Camera
       </v-btn>
     </div>
 
-    <!-- Playback after recording -->
-    <video
-      v-if="recordedVideoUrl"
-      :src="recordedVideoUrl"
-      controls
-      class="playback"
-    ></video>
+    <!-- Video Preview -->
+    <div v-else>
+      <video ref="video" autoplay muted playsinline class="video-preview" />
 
-    <!-- Download -->
-    <div v-if="recordedVideoUrl" class="download">
-      <a :href="recordedVideoUrl" download="recording.webm" class="v-btn primary white--text">
-        ⬇️ Download
-      </a>
+      <!-- Controls -->
+      <div class="record-buttons mt-4">
+        <v-btn color="blue" @click="flipCamera" :disabled="isRecording">
+          🔄 Flip Camera
+        </v-btn>
+
+        <v-btn
+          v-if="!isRecording && !isPaused"
+          color="red"
+          fab
+          @click="startRecording"
+        >
+          <v-icon>mdi-record</v-icon>
+        </v-btn>
+
+        <v-btn
+          v-if="isRecording && !isPaused"
+          color="orange"
+          fab
+          @click="pauseRecording"
+        >
+          <v-icon>mdi-pause</v-icon>
+        </v-btn>
+
+        <v-btn
+          v-if="isPaused"
+          color="green"
+          fab
+          @click="resumeRecording"
+        >
+          <v-icon>mdi-play</v-icon>
+        </v-btn>
+
+        <v-btn
+          v-if="isRecording"
+          color="error"
+          fab
+          @click="stopRecording"
+        >
+          <v-icon>mdi-stop</v-icon>
+        </v-btn>
+      </div>
+
+      <!-- Playback -->
+      <video
+        v-if="recordedVideoUrl"
+        :src="recordedVideoUrl"
+        controls
+        class="playback mt-6"
+      />
+
+      <!-- Actions -->
+      <div v-if="recordedVideoUrl" class="mt-4">
+        <v-btn
+          class="ma-2"
+          color="primary"
+          :href="recordedVideoUrl"
+          download="recording.webm"
+        >
+          ⬇️ Download
+        </v-btn>
+        <v-btn class="ma-2" color="grey darken-1" @click="deleteRecording">
+          🗑️ Delete
+        </v-btn>
+      </div>
     </div>
-  </div>
+  </v-container>
 </template>
 
 <script>
 export default {
   data() {
     return {
+      cameraStarted: false,
       stream: null,
       mediaRecorder: null,
       recordedChunks: [],
       recordedVideoUrl: null,
       isRecording: false,
       isPaused: false,
-      useFrontCamera: false // <-- flip state
+      useFrontCamera: false
     }
-  },
-  mounted() {
-    this.startCamera()
   },
   methods: {
     async startCamera() {
+      this.cameraStarted = true
+
       if (this.stream) {
-        this.stream.getTracks().forEach(track => track.stop())
+        this.stream.getTracks().forEach((t) => t.stop())
       }
 
       try {
         this.stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: this.useFrontCamera ? 'user' : 'environment'
-          },
+          video: { facingMode: this.useFrontCamera ? 'user' : 'environment' },
           audio: true
         })
         this.$refs.video.srcObject = this.stream
       } catch (err) {
-        alert('❌ Could not access camera/microphone: ' + err.message)
+        alert('❌ Could not access camera/mic: ' + err.message)
         console.error(err)
       }
     },
@@ -141,11 +158,15 @@ export default {
         this.isRecording = false
         this.isPaused = false
       }
+    },
+    deleteRecording() {
+      this.recordedVideoUrl = null
+      this.recordedChunks = []
     }
   },
   beforeDestroy() {
     if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop())
+      this.stream.getTracks().forEach((track) => track.stop())
     }
   }
 }
@@ -153,35 +174,20 @@ export default {
 
 <style scoped>
 .camera-container {
-  position: relative;
-  width: 100%;
   max-width: 640px;
   margin: auto;
-  text-align: center;
 }
-
-video {
+.video-preview,
+.playback {
   width: 100%;
   height: auto;
-  background: black;
   border-radius: 8px;
+  background: black;
 }
-
 .record-buttons {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 20px;
-}
-
-.playback {
-  margin-top: 20px;
-  width: 100%;
-  border-radius: 8px;
-}
-
-.download {
-  margin-top: 12px;
 }
 </style>
