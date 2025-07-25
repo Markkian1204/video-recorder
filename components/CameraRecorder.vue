@@ -1,11 +1,11 @@
 <template>
   <v-container class="camera-container text-center py-6">
-    <!-- Start button before permission -->
+    <!-- Start Camera Button -->
     <div v-if="!cameraStarted">
       <v-btn color="primary" @click="startCamera">🎥 Start Camera</v-btn>
     </div>
 
-    <!-- Live camera preview -->
+    <!-- Live Preview -->
     <video
       v-if="cameraStarted"
       ref="video"
@@ -15,7 +15,7 @@
       class="camera-preview"
     />
 
-    <!-- Recording controls -->
+    <!-- Recorder Controls -->
     <div v-if="cameraStarted" class="record-buttons mt-4">
       <v-btn color="blue" @click="flipCamera" :disabled="isRecording">
         🔄 Flip Camera
@@ -66,9 +66,13 @@
       class="playback mt-4"
     ></video>
 
-    <!-- Download -->
+    <!-- Download Button -->
     <div v-if="recordedVideoUrl" class="mt-2">
-      <a :href="recordedVideoUrl" download="recording.webm" class="v-btn primary white--text">
+      <a
+        :href="recordedVideoUrl"
+        download="recording.webm"
+        class="v-btn primary white--text"
+      >
         ⬇️ Download Recording
       </a>
     </div>
@@ -118,8 +122,13 @@ export default {
           audio: true
         })
 
-        this.$refs.video.srcObject = this.stream
         this.cameraStarted = true
+
+        this.$nextTick(() => {
+          if (this.$refs.video) {
+            this.$refs.video.srcObject = this.stream
+          }
+        })
       } catch (err) {
         alert('❌ Could not access camera or microphone: ' + err.message)
         console.error(err)
@@ -186,14 +195,12 @@ export default {
   border-radius: 10px;
   background: black;
 }
-
 .playback {
   width: 100%;
   max-width: 640px;
   border-radius: 10px;
   background: #000;
 }
-
 .record-buttons {
   display: flex;
   justify-content: center;
@@ -202,4 +209,3 @@ export default {
   margin-top: 12px;
 }
 </style>
-

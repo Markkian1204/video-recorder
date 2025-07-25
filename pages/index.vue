@@ -1,7 +1,5 @@
 <template>
-  <div>
-    <CameraRecorder />
-  </div>
+  <CameraRecorder />
 </template>
 
 <script>
