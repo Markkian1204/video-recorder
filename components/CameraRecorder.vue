@@ -5,6 +5,10 @@
 
     <!-- Recording buttons -->
     <div class="record-buttons">
+      <v-btn color="blue" @click="flipCamera" :disabled="isRecording">
+        🔄 Flip Camera
+      </v-btn>
+
       <v-btn
         v-if="!isRecording && !isPaused"
         color="red"
@@ -68,7 +72,8 @@ export default {
       recordedChunks: [],
       recordedVideoUrl: null,
       isRecording: false,
-      isPaused: false
+      isPaused: false,
+      useFrontCamera: false // <-- flip state
     }
   },
   mounted() {
@@ -76,15 +81,15 @@ export default {
   },
   methods: {
     async startCamera() {
-      // Stop existing tracks
       if (this.stream) {
         this.stream.getTracks().forEach(track => track.stop())
       }
 
       try {
-        // No facingMode constraint — let browser decide (usually back camera)
         this.stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
+          video: {
+            facingMode: this.useFrontCamera ? 'user' : 'environment'
+          },
           audio: true
         })
         this.$refs.video.srcObject = this.stream
@@ -92,6 +97,10 @@ export default {
         alert('❌ Could not access camera/microphone: ' + err.message)
         console.error(err)
       }
+    },
+    flipCamera() {
+      this.useFrontCamera = !this.useFrontCamera
+      this.startCamera()
     },
     startRecording() {
       if (!this.stream) return
