@@ -16,15 +16,16 @@
       ref="video"
       autoplay
       playsinline
-      width="320"
-      height="240"
-      style="margin-top: 1rem; border: 2px solid #333;"
+      muted
+      width="100%"
+      style="max-width: 320px; height: auto; border: 2px solid #333; margin-top: 1rem;"
     ></video>
   </div>
 </template>
 
 <script>
 export default {
+  name: 'IndexPage',
   data() {
     return {
       streamReady: false,
@@ -35,10 +36,18 @@ export default {
     async startCamera() {
       this.error = null
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true })
-        this.$refs.video.srcObject = stream
-        this.streamReady = true
-        console.log('✅ Camera stream started')
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } }
+        })
+        console.log('✅ Got media stream:', stream)
+
+        if (this.$refs.video) {
+          this.$refs.video.srcObject = stream
+          this.streamReady = true
+          console.log('🎥 Stream attached to video element')
+        } else {
+          console.warn('⚠️ Video ref is missing')
+        }
       } catch (err) {
         this.error = `❌ ${err.name}: ${err.message}`
         console.error('Camera error:', err)
