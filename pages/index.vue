@@ -1,15 +1,54 @@
 <template>
-  <v-container>
-    <video-recorder />
-  </v-container>
+  <div style="padding: 2rem; text-align: center;">
+    <h2>📷 Camera Test Page</h2>
+
+    <!-- Start button -->
+    <button @click="startCamera" style="padding: 10px 20px; font-size: 16px;">
+      Start Camera
+    </button>
+
+    <!-- Error display -->
+    <div v-if="error" style="color: red; margin-top: 1rem;">{{ error }}</div>
+
+    <!-- Live video -->
+    <video
+      v-show="streamReady"
+      ref="video"
+      autoplay
+      playsinline
+      width="320"
+      height="240"
+      style="margin-top: 1rem; border: 2px solid #333;"
+    ></video>
+  </div>
 </template>
 
 <script>
-import VideoRecorder from '~/components/VideoRecorder.vue'
-
 export default {
-  components: {
-    VideoRecorder
+  data() {
+    return {
+      streamReady: false,
+      error: null,
+    }
+  },
+  methods: {
+    async startCamera() {
+      this.error = null
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+        this.$refs.video.srcObject = stream
+        this.streamReady = true
+        console.log('✅ Camera stream started')
+      } catch (err) {
+        this.error = `❌ ${err.name}: ${err.message}`
+        console.error('Camera error:', err)
+      }
+    }
+  },
+  beforeDestroy() {
+    if (this.$refs.video && this.$refs.video.srcObject) {
+      this.$refs.video.srcObject.getTracks().forEach(track => track.stop())
+    }
   }
 }
 </script>
