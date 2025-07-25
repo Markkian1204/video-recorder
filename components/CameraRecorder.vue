@@ -89,35 +89,21 @@ export default {
       recordedVideoUrl: null,
       isRecording: false,
       isPaused: false,
-      usingFrontCamera: false,
+      usingFrontCamera: false, // ⬅️ starts with back camera
       cameraStarted: false
     }
   },
   methods: {
     async startCamera() {
+      // Stop existing stream
       if (this.stream) {
         this.stream.getTracks().forEach(track => track.stop())
       }
 
       try {
-        const devices = await navigator.mediaDevices.enumerateDevices()
-        const videoDevices = devices.filter(d => d.kind === 'videoinput')
-
-        let selectedDeviceId = null
-
-        if (this.usingFrontCamera) {
-          selectedDeviceId = videoDevices.find(d =>
-            d.label.toLowerCase().includes('front')
-          )?.deviceId || videoDevices[0]?.deviceId
-        } else {
-          selectedDeviceId = videoDevices.find(d =>
-            d.label.toLowerCase().includes('back')
-          )?.deviceId || videoDevices[0]?.deviceId
-        }
-
         this.stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined
+            facingMode: this.usingFrontCamera ? 'user' : { exact: 'environment' }
           },
           audio: true
         })
@@ -130,7 +116,7 @@ export default {
           }
         })
       } catch (err) {
-        alert('❌ Could not access camera or microphone: ' + err.message)
+        alert('❌ Could not access camera/mic: ' + err.message)
         console.error(err)
       }
     },
