@@ -1,10 +1,22 @@
 <template>
   <v-container class="camera-container text-center py-6">
-    <!-- Live camera preview -->
-    <video ref="video" autoplay muted playsinline class="camera-preview" />
+    <!-- Start button before permission -->
+    <div v-if="!cameraStarted">
+      <v-btn color="primary" @click="startCamera">🎥 Start Camera</v-btn>
+    </div>
 
-    <!-- Recording buttons -->
-    <div class="record-buttons mt-4">
+    <!-- Live camera preview -->
+    <video
+      v-if="cameraStarted"
+      ref="video"
+      autoplay
+      muted
+      playsinline
+      class="camera-preview"
+    />
+
+    <!-- Recording controls -->
+    <div v-if="cameraStarted" class="record-buttons mt-4">
       <v-btn color="blue" @click="flipCamera" :disabled="isRecording">
         🔄 Flip Camera
       </v-btn>
@@ -73,11 +85,9 @@ export default {
       recordedVideoUrl: null,
       isRecording: false,
       isPaused: false,
-      usingFrontCamera: false
+      usingFrontCamera: false,
+      cameraStarted: false
     }
-  },
-  mounted() {
-    this.startCamera()
   },
   methods: {
     async startCamera() {
@@ -109,6 +119,7 @@ export default {
         })
 
         this.$refs.video.srcObject = this.stream
+        this.cameraStarted = true
       } catch (err) {
         alert('❌ Could not access camera or microphone: ' + err.message)
         console.error(err)
@@ -182,4 +193,13 @@ export default {
   border-radius: 10px;
   background: #000;
 }
+
+.record-buttons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
 </style>
+
